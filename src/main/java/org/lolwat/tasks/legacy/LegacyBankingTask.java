@@ -1,4 +1,4 @@
-package org.lolwat.tasks.misc;
+package org.lolwat.tasks.legacy;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -20,6 +20,7 @@ import org.lolwat.misc.utils.GenericUtils;
 import org.lolwat.misc.utils.ItemUtils;
 import org.lolwat.misc.utils.NumUtils;
 import org.lolwat.tasks.alching.HighAlchemyTask;
+import org.lolwat.tasks.misc.MulingTask;
 
 import java.util.*;
 
@@ -47,7 +48,7 @@ public class LegacyBankingTask implements WatTask {
             return;
         }
 
-        depositNonRequired();
+        //depositNonRequired();
         Logger.log("Sell checker: finished");
         ItemUtils.setBankMode(BankMode.ITEM);
 
@@ -260,7 +261,7 @@ public class LegacyBankingTask implements WatTask {
                 Sleep.sleep(100, 200);
                 Bank.close();
 
-                TaskManager.getInstance().setCurrentTask(new GrandExchangeTask("Buying required items", false, buyingRequired, this));
+                TaskManager.getInstance().setCurrentTask(new LegacyExchangeTask("Buying required items", false, buyingRequired, this));
                 return;
             } else {
                 ItemUtils.setBankMode(BankMode.NOTE);
@@ -294,10 +295,16 @@ public class LegacyBankingTask implements WatTask {
         Logger.log("Exchanger: Finished checks");
 
         if (postTask != null && !(postTask instanceof MulingTask)) {
-            depositNonRequired();
+            //depositNonRequired();
         }
 
         if(Bank.contains("Coins")) {
+            if(!Bank.withdrawAll("Coins")) {
+                Logger.error("error withdrawing excess coins");
+            }
+        }
+
+        if(Bank.contains("Nature rune")) {
             if(!Bank.withdrawAll("Coins")) {
                 Logger.error("error withdrawing excess coins");
             }

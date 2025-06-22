@@ -1,4 +1,4 @@
-package org.lolwat.tasks.misc;
+package org.lolwat.tasks.legacy;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -18,17 +18,18 @@ import org.lolwat.managers.TaskManager;
 import org.lolwat.managers.TeleportManager;
 import org.lolwat.managers.types.WatTask;
 import org.lolwat.misc.utils.NumUtils;
+import org.lolwat.tasks.misc.TraversalTask;
 
 import java.util.HashMap;
 
-public class GrandExchangeTask implements WatTask {
+public class LegacyExchangeTask implements WatTask {
     private final String name;
     private final HashMap<String, Integer> itemList;
     private final WatTask postTask;
     private final boolean isSelling;
     private int retries = 0;
 
-    public GrandExchangeTask(String taskName, boolean selling, HashMap<String, Integer> items, WatTask post) {
+    public LegacyExchangeTask(String taskName, boolean selling, HashMap<String, Integer> items, WatTask post) {
         name = taskName;
         itemList = items;
         postTask = post;
@@ -37,7 +38,7 @@ public class GrandExchangeTask implements WatTask {
 
     @Override
     public String getName() {
-        return "Exchanging (old)";
+        return "Exchanging (legacy)";
     }
 
     @Override
@@ -57,7 +58,6 @@ public class GrandExchangeTask implements WatTask {
             Sleep.sleepUntil(Bank::isOpen, 5000);
 
             if (Bank.isOpen()) {
-                // Deposit all except items in itemList and coins
                 Bank.depositAllExcept(item -> itemList.containsKey(item.getName()) || item.getName().equalsIgnoreCase("Coins"));
                 Sleep.sleepUntil(() -> !Inventory.isFull(), 3000);
             } else {
@@ -86,7 +86,6 @@ public class GrandExchangeTask implements WatTask {
             Logger.log("==== Beginning G.E Main Operations ====");
             Logger.log("We have " + itemList.size() + " items to deal with");
             for (java.util.Map.Entry<String, Integer> item : itemList.entrySet()) {
-                // Get a slot. If unavailable, will cancel the other offers we have going
                 if (GrandExchange.getFirstOpenSlot() == -1) {
                     Sleep.sleep(500, 900);
 
@@ -187,6 +186,20 @@ public class GrandExchangeTask implements WatTask {
                         itemFinal = "Old school bond";
                     } else if (TeleportManager.getInstance().isTeleportItem(itemFinal)) {
                         itemFinal = TeleportManager.getInstance().getChargedItemName(itemFinal);
+                    }
+
+                    if(itemFinal.contains("bond")) {
+                        if(Inventory.count(x -> x != null && x.getName().equalsIgnoreCase(item.getKey())) >= item.getValue()) {
+                            Logger.log("We already have " + item.getValue() + " of " + item.getKey() + ", skipping G.E for this item");
+                            continue;
+                        }
+
+                        if(Bank.isCached()) {
+                            if(Bank.count(x -> x != null && x.getName().equalsIgnoreCase(item.getKey())) >= item.getValue()) {
+                                Logger.log("We already have " + item.getValue() + " of " + item.getKey() + " in the bank, skipping G.E for this item");
+                                continue;
+                            }
+                        }
                     }
 
                     Logger.log("Buying: " + itemFinal);
